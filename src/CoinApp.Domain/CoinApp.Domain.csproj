@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>CoinApp.Domain</AssemblyName>
+    <RootNamespace>CoinApp.Domain</RootNamespace>
+  </PropertyGroup>
+</Project>
+

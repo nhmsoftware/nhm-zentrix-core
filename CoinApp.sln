@@ -1,0 +1,55 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoinApp.Api", "src\CoinApp.Api\CoinApp.Api.csproj", "{0AB46607-3C38-48FD-BF13-6809EF07D108}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoinApp.Application", "src\CoinApp.Application\CoinApp.Application.csproj", "{6E581764-E03E-424E-93DE-A956D9917F40}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoinApp.Domain", "src\CoinApp.Domain\CoinApp.Domain.csproj", "{5E1A675F-3E5E-4F67-9C6D-C0C8B241194B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoinApp.Infrastructure", "src\CoinApp.Infrastructure\CoinApp.Infrastructure.csproj", "{BA2C2700-267C-473A-813D-B661E50C2120}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoinApp.UnitTests", "tests\CoinApp.UnitTests\CoinApp.UnitTests.csproj", "{0270F109-C55A-4961-93F2-B407ABD374E0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoinApp.IntegrationTests", "tests\CoinApp.IntegrationTests\CoinApp.IntegrationTests.csproj", "{B4A10949-D325-4579-A145-7FD68766D7AE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0AB46607-3C38-48FD-BF13-6809EF07D108}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0AB46607-3C38-48FD-BF13-6809EF07D108}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0AB46607-3C38-48FD-BF13-6809EF07D108}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0AB46607-3C38-48FD-BF13-6809EF07D108}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6E581764-E03E-424E-93DE-A956D9917F40}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6E581764-E03E-424E-93DE-A956D9917F40}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6E581764-E03E-424E-93DE-A956D9917F40}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6E581764-E03E-424E-93DE-A956D9917F40}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5E1A675F-3E5E-4F67-9C6D-C0C8B241194B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5E1A675F-3E5E-4F67-9C6D-C0C8B241194B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5E1A675F-3E5E-4F67-9C6D-C0C8B241194B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5E1A675F-3E5E-4F67-9C6D-C0C8B241194B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BA2C2700-267C-473A-813D-B661E50C2120}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BA2C2700-267C-473A-813D-B661E50C2120}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BA2C2700-267C-473A-813D-B661E50C2120}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BA2C2700-267C-473A-813D-B661E50C2120}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0270F109-C55A-4961-93F2-B407ABD374E0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0270F109-C55A-4961-93F2-B407ABD374E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0270F109-C55A-4961-93F2-B407ABD374E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0270F109-C55A-4961-93F2-B407ABD374E0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B4A10949-D325-4579-A145-7FD68766D7AE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B4A10949-D325-4579-A145-7FD68766D7AE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B4A10949-D325-4579-A145-7FD68766D7AE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B4A10949-D325-4579-A145-7FD68766D7AE}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F34BCCB3-B018-41CC-87BE-916E7BF78008}
+	EndGlobalSection
+EndGlobal
+

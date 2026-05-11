@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <AssemblyName>CoinApp.Api</AssemblyName>
+    <RootNamespace>CoinApp.Api</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CoinApp.Application\CoinApp.Application.csproj" />
+    <ProjectReference Include="..\CoinApp.Infrastructure\CoinApp.Infrastructure.csproj" />
+    <ProjectReference Include="..\CoinApp.Domain\CoinApp.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.7" />
+  </ItemGroup>
+</Project>
