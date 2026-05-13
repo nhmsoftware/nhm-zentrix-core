@@ -2,6 +2,7 @@ using CoinApp.Application.Common.Interfaces;
 using CoinApp.Application.Interfaces.Repositories;
 using CoinApp.Infrastructure.Persistence;
 using CoinApp.Infrastructure.Repositories;
+using CoinApp.Infrastructure.Storage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,6 +30,14 @@ public static class DependencyInjection
 
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
         services.AddScoped<ICoinRepository, CoinRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IBankRepository, BankRepository>();
+        services.AddScoped<IAppConfigRepository, AppConfigRepository>();
+        services.AddScoped<ITradingAccountRepository, TradingAccountRepository>();
+        services.AddScoped<IWalletTransactionRepository, WalletTransactionRepository>();
+        services.AddScoped<ISupportTicketRepository, SupportTicketRepository>();
+        services.AddScoped<ISupportTicketMessageRepository, SupportTicketMessageRepository>();
+        services.AddScoped<IFileStorageService, LocalFileStorageService>();
 
         return services;
     }

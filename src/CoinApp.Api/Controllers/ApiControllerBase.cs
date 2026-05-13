@@ -34,6 +34,36 @@ public abstract class ApiControllerBase : ControllerBase
             return NotFound(response);
         }
 
+        if (string.Equals(result.ErrorCode, ServiceErrorCodes.UserNotFound, StringComparison.Ordinal))
+        {
+            return NotFound(response);
+        }
+
+        if (string.Equals(result.ErrorCode, ServiceErrorCodes.AccountNotFound, StringComparison.Ordinal))
+        {
+            return NotFound(response);
+        }
+
+        if (string.Equals(result.ErrorCode, ServiceErrorCodes.SupportTicketNotFound, StringComparison.Ordinal))
+        {
+            return NotFound(response);
+        }
+
+        if (string.Equals(result.ErrorCode, ServiceErrorCodes.AuthInvalidCredentials, StringComparison.Ordinal))
+        {
+            return Unauthorized(response);
+        }
+
+        if (string.Equals(result.ErrorCode, ServiceErrorCodes.UserInactive, StringComparison.Ordinal))
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, response);
+        }
+
+        if (string.Equals(result.ErrorCode, ServiceErrorCodes.AuthEmailAlreadyExists, StringComparison.Ordinal))
+        {
+            return Conflict(response);
+        }
+
         return BadRequest(response);
     }
 }

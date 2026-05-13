@@ -13,28 +13,120 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="coin.not_found" xml:space="preserve">
-    <value>Khong tim thay coin.</value>
+    <value>Không tìm thấy coin.</value>
   </data>
   <data name="validation.failed" xml:space="preserve">
-    <value>Du lieu khong hop le.</value>
+    <value>Dữ liệu không hợp lệ.</value>
   </data>
   <data name="validation.coin_symbol_required" xml:space="preserve">
-    <value>Ma coin bat buoc phai nhap.</value>
+    <value>Mã coin bắt buộc phải nhập.</value>
   </data>
   <data name="validation.coin_symbol_length" xml:space="preserve">
-    <value>Ma coin khong duoc vuot qua 20 ky tu.</value>
+    <value>Mã coin không được vượt quá 20 ký tự.</value>
   </data>
   <data name="validation.coin_symbol_format" xml:space="preserve">
-    <value>Dinh dang ma coin khong hop le.</value>
+    <value>Định dạng mã coin không hợp lệ.</value>
   </data>
   <data name="common.unexpected_error" xml:space="preserve">
-    <value>Da xay ra loi khong mong doi.</value>
+    <value>Đã xảy ra lỗi không mong đợi.</value>
   </data>
   <data name="common.error_title" xml:space="preserve">
-    <value>Loi he thong</value>
+    <value>Lỗi hệ thống</value>
   </data>
   <data name="culture.unsupported" xml:space="preserve">
-    <value>Ngon ngu khong duoc ho tro.</value>
+    <value>Ngôn ngữ không được hỗ trợ.</value>
+  </data>
+  <data name="auth.email_already_exists" xml:space="preserve">
+    <value>Email đã tồn tại.</value>
+  </data>
+  <data name="auth.invalid_credentials" xml:space="preserve">
+    <value>Email hoặc mật khẩu không đúng.</value>
+  </data>
+  <data name="auth.user_not_found" xml:space="preserve">
+    <value>Không tìm thấy người dùng.</value>
+  </data>
+  <data name="auth.user_inactive" xml:space="preserve">
+    <value>Tài khoản không còn hoạt động.</value>
+  </data>
+  <data name="validation.auth_full_name_required" xml:space="preserve">
+    <value>Họ tên bắt buộc phải nhập.</value>
+  </data>
+  <data name="validation.auth_full_name_length" xml:space="preserve">
+    <value>Họ tên không được vượt quá 100 ký tự.</value>
+  </data>
+  <data name="validation.auth_email_required" xml:space="preserve">
+    <value>Email bắt buộc phải nhập.</value>
+  </data>
+  <data name="validation.auth_email_length" xml:space="preserve">
+    <value>Email không được vượt quá 200 ký tự.</value>
+  </data>
+  <data name="validation.auth_email_invalid" xml:space="preserve">
+    <value>Email không hợp lệ.</value>
+  </data>
+  <data name="validation.auth_password_required" xml:space="preserve">
+    <value>Mật khẩu bắt buộc phải nhập.</value>
+  </data>
+  <data name="validation.auth_password_min_length" xml:space="preserve">
+    <value>Mật khẩu phải có ít nhất 8 ký tự.</value>
+  </data>
+  <data name="validation.auth_password_max_length" xml:space="preserve">
+    <value>Mật khẩu không được vượt quá 128 ký tự.</value>
+  </data>
+  <data name="profile.invalid_gender" xml:space="preserve">
+    <value>Giới tính không hợp lệ.</value>
+  </data>
+  <data name="profile.invalid_verification_data" xml:space="preserve">
+    <value>Thông tin xác minh hồ sơ không hợp lệ.</value>
+  </data>
+  <data name="profile.identity_document_required" xml:space="preserve">
+    <value>Cần tải lên ảnh CCCD mặt trước và mặt sau hợp lệ.</value>
+  </data>
+  <data name="profile.identity_document_invalid" xml:space="preserve">
+    <value>Định dạng tài liệu xác minh không hợp lệ.</value>
+  </data>
+  <data name="account.not_found" xml:space="preserve">
+    <value>Không tìm thấy tài khoản.</value>
+  </data>
+  <data name="account.invalid_type" xml:space="preserve">
+    <value>Loại tài khoản không hợp lệ.</value>
+  </data>
+  <data name="wallet.invalid_amount" xml:space="preserve">
+    <value>Số tiền không hợp lệ.</value>
+  </data>
+  <data name="wallet.insufficient_balance" xml:space="preserve">
+    <value>Số dư ví không đủ.</value>
+  </data>
+  <data name="wallet.bank_account_required" xml:space="preserve">
+    <value>Cần cập nhật thông tin ngân hàng trước khi rút tiền.</value>
+  </data>
+  <data name="ticket.not_found" xml:space="preserve">
+    <value>Không tìm thấy yêu cầu hỗ trợ.</value>
+  </data>
+  <data name="ticket.invalid_type" xml:space="preserve">
+    <value>Loại yêu cầu hỗ trợ không hợp lệ.</value>
+  </data>
+  <data name="ticket.invalid_priority" xml:space="preserve">
+    <value>Mức ưu tiên không hợp lệ.</value>
+  </data>
+  <data name="ticket.invalid_status" xml:space="preserve">
+    <value>Trạng thái yêu cầu hỗ trợ không hợp lệ.</value>
+  </data>
+  <data name="ticket.closed" xml:space="preserve">
+    <value>Yêu cầu hỗ trợ đã đóng.</value>
+  </data>
+  <data name="validation.wallet_money_positive" xml:space="preserve">
+    <value>Số tiền phải lớn hơn 0.</value>
+  </data>
+  <data name="validation.ticket_type_invalid" xml:space="preserve">
+    <value>Loại yêu cầu hỗ trợ không hợp lệ.</value>
+  </data>
+  <data name="validation.ticket_priority_invalid" xml:space="preserve">
+    <value>Mức ưu tiên không hợp lệ.</value>
+  </data>
+  <data name="validation.ticket_message_required" xml:space="preserve">
+    <value>Nội dung bắt buộc phải nhập.</value>
+  </data>
+  <data name="validation.ticket_message_length" xml:space="preserve">
+    <value>Nội dung không được vượt quá 2000 ký tự.</value>
   </data>
 </root>
-

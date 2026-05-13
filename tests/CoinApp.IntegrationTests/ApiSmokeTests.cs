@@ -3,11 +3,11 @@ using Xunit;
 
 namespace CoinApp.IntegrationTests;
 
-public sealed class ApiSmokeTests : IClassFixture<WebApplicationFactory<global::Program>>
+public sealed class ApiSmokeTests : IClassFixture<TestWebApplicationFactory>
 {
-    private readonly WebApplicationFactory<global::Program> _factory;
+    private readonly TestWebApplicationFactory _factory;
 
-    public ApiSmokeTests(WebApplicationFactory<global::Program> factory)
+    public ApiSmokeTests(TestWebApplicationFactory factory)
     {
         _factory = factory;
     }
