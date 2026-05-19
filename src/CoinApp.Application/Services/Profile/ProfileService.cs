@@ -144,14 +144,21 @@ public sealed class ProfileService : IProfileService
     {
         gender = value.Trim().ToLowerInvariant() switch
         {
-            "male" => UserGender.Male,
-            "female" => UserGender.Female,
-            "other" => UserGender.Other,
+            UserGenderCodes.Male => UserGender.Male,
+            UserGenderCodes.Female => UserGender.Female,
             _ => UserGender.Unspecified
         };
 
         return gender != UserGender.Unspecified;
     }
+
+    private static string ToGenderCode(UserGender gender) =>
+        gender switch
+        {
+            UserGender.Male => UserGenderCodes.Male,
+            UserGender.Female => UserGenderCodes.Female,
+            _ => UserGenderCodes.Unspecified
+        };
 
     private static UserProfileDto MapUserProfile(User user)
     {
@@ -168,7 +175,7 @@ public sealed class ProfileService : IProfileService
             user.FirstName,
             user.LastName,
             user.DateOfBirth,
-            user.Gender.ToString().ToLowerInvariant(),
+            ToGenderCode(user.Gender),
             (int)user.Gender,
             user.PhoneNumber,
             user.Address,

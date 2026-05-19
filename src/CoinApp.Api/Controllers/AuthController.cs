@@ -99,6 +99,14 @@ public sealed class AuthController : ApiControllerBase
     }
 
     [Authorize]
+    [HttpPost("change-password")]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _authService.ChangePasswordAsync(request, cancellationToken);
+        return FromResult(result);
+    }
+
+    [Authorize]
     [HttpPost("verify-account")]
     [Consumes("multipart/form-data")]
     public async Task<IActionResult> VerifyAccount([FromForm] VerifyAccountFormRequest request, CancellationToken cancellationToken)

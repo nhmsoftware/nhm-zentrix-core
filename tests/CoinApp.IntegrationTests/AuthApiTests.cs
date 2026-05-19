@@ -211,6 +211,63 @@ public sealed class AuthApiTests : IClassFixture<TestWebApplicationFactory>
         Assert.Equal(HttpStatusCode.OK, newPasswordLoginResponse.StatusCode);
     }
 
+    [Fact]
+    public async Task ChangePassword_RevokesOldToken_AndAllowsLoginWithNewPassword()
+    {
+        var client = CreateClient();
+        var email = $"david-{Guid.NewGuid():N}@example.com";
+        const string currentPassword = "CurrentPassword123!";
+        const string newPassword = "ChangedPassword123!";
+
+        await SeedUserAsync("David Example", email, currentPassword, emailVerified: true);
+
+        var loginResponse = await client.PostAsJsonAsync("/api/auth/login", new LoginRequest
+        {
+            Email = email,
+            Password = currentPassword
+        });
+
+        Assert.Equal(HttpStatusCode.OK, loginResponse.StatusCode);
+
+        var loginPayload = await ReadDataAsync<AuthResponseDto>(loginResponse);
+
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", loginPayload.AccessToken);
+
+        var changePasswordResponse = await client.PostAsJsonAsync("/api/auth/change-password", new ChangePasswordRequest
+        {
+            CurrentPassword = currentPassword,
+            NewPassword = newPassword
+        });
+
+        Assert.Equal(HttpStatusCode.OK, changePasswordResponse.StatusCode);
+
+        var changePasswordPayload = await ReadDataAsync<ChangePasswordResponseDto>(changePasswordResponse);
+
+        Assert.True(changePasswordPayload.Success);
+
+        var meWithOldTokenResponse = await client.GetAsync("/api/auth/me");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, meWithOldTokenResponse.StatusCode);
+
+        client.DefaultRequestHeaders.Authorization = null;
+
+        var oldPasswordLoginResponse = await client.PostAsJsonAsync("/api/auth/login", new LoginRequest
+        {
+            Email = email,
+            Password = currentPassword
+        });
+
+        Assert.Equal(HttpStatusCode.Unauthorized, oldPasswordLoginResponse.StatusCode);
+
+        var newPasswordLoginResponse = await client.PostAsJsonAsync("/api/auth/login", new LoginRequest
+        {
+            Email = email,
+            Password = newPassword
+        });
+
+        Assert.Equal(HttpStatusCode.OK, newPasswordLoginResponse.StatusCode);
+    }
+
     private static async Task<T> ReadDataAsync<T>(HttpResponseMessage response)
     {
         var payload = await response.Content.ReadFromJsonAsync<ApiSuccessResponse<T>>();

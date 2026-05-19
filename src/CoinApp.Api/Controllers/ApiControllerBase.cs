@@ -54,6 +54,16 @@ public abstract class ApiControllerBase : ControllerBase
             return Unauthorized(response);
         }
 
+        if (string.Equals(result.ErrorCode, ServiceErrorCodes.AuthCurrentPasswordInvalid, StringComparison.Ordinal))
+        {
+            return Unauthorized(response);
+        }
+
+        if (string.Equals(result.ErrorCode, ServiceErrorCodes.AuthUnauthenticated, StringComparison.Ordinal))
+        {
+            return Unauthorized(response);
+        }
+
         if (string.Equals(result.ErrorCode, ServiceErrorCodes.UserInactive, StringComparison.Ordinal))
         {
             return StatusCode(StatusCodes.Status403Forbidden, response);

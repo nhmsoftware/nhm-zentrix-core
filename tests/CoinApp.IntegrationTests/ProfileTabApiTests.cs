@@ -31,26 +31,24 @@ public sealed class ProfileTabApiTests : IClassFixture<TestWebApplicationFactory
         var profileResponse = await client.GetAsync("/api/auth/user-profile");
         Assert.Equal(HttpStatusCode.OK, profileResponse.StatusCode);
 
-        var profile = await profileResponse.Content.ReadFromJsonAsync<UserProfileDto>();
-        Assert.NotNull(profile);
-        Assert.False(string.IsNullOrWhiteSpace(profile!.ReferralCode));
+        var profile = await ReadDataAsync<UserProfileDto>(profileResponse);
+        Assert.False(string.IsNullOrWhiteSpace(profile.ReferralCode));
         Assert.Equal("unverified", profile.VerificationStatus);
 
         var banksResponse = await client.GetAsync("/api/common/banks");
         Assert.Equal(HttpStatusCode.OK, banksResponse.StatusCode);
-        Assert.NotNull(await banksResponse.Content.ReadFromJsonAsync<IReadOnlyList<BankDto>>());
+        Assert.NotNull(await ReadDataAsync<IReadOnlyList<BankDto>>(banksResponse));
 
         var configResponse = await client.GetAsync("/api/config/list");
         Assert.Equal(HttpStatusCode.OK, configResponse.StatusCode);
-        Assert.NotNull(await configResponse.Content.ReadFromJsonAsync<IReadOnlyList<AppConfigDto>>());
+        Assert.NotNull(await ReadDataAsync<IReadOnlyList<AppConfigDto>>(configResponse));
 
         using var verifyContent = CreateVerifyAccountContent();
         var verifyResponse = await client.PostAsync("/api/auth/verify-account", verifyContent);
         Assert.Equal(HttpStatusCode.OK, verifyResponse.StatusCode);
 
-        var verifiedProfile = await verifyResponse.Content.ReadFromJsonAsync<UserProfileDto>();
-        Assert.NotNull(verifiedProfile);
-        Assert.Equal("waiting", verifiedProfile!.VerificationStatus);
+        var verifiedProfile = await ReadDataAsync<UserProfileDto>(verifyResponse);
+        Assert.Equal("waiting", verifiedProfile.VerificationStatus);
         Assert.NotNull(verifiedProfile.Bank);
         Assert.Equal("970436", verifiedProfile.Bank!.BinBank);
 
@@ -59,7 +57,7 @@ public sealed class ProfileTabApiTests : IClassFixture<TestWebApplicationFactory
 
         var withdrawError = await withdrawResponse.Content.ReadFromJsonAsync<ApiErrorResponse>();
         Assert.NotNull(withdrawError);
-        Assert.Equal("wallet.insufficient_balance", withdrawError!.ErrorCode);
+        Assert.Equal("Số dư ví không đủ.", withdrawError!.Message);
 
         var createTicketResponse = await client.PostAsJsonAsync("/api/tickets", new CreateSupportTicketRequest
         {
@@ -70,23 +68,20 @@ public sealed class ProfileTabApiTests : IClassFixture<TestWebApplicationFactory
 
         Assert.Equal(HttpStatusCode.OK, createTicketResponse.StatusCode);
 
-        var ticket = await createTicketResponse.Content.ReadFromJsonAsync<SupportTicketDto>();
-        Assert.NotNull(ticket);
-        Assert.Equal("open", ticket!.Status);
+        var ticket = await ReadDataAsync<SupportTicketDto>(createTicketResponse);
+        Assert.Equal("open", ticket.Status);
 
         var ticketsResponse = await client.GetAsync("/api/tickets?page=1&status=1");
         Assert.Equal(HttpStatusCode.OK, ticketsResponse.StatusCode);
 
-        var tickets = await ticketsResponse.Content.ReadFromJsonAsync<PaginatedResult<SupportTicketDto>>();
-        Assert.NotNull(tickets);
-        Assert.Single(tickets!.Items);
+        var tickets = await ReadDataAsync<PaginatedResult<SupportTicketDto>>(ticketsResponse);
+        Assert.Single(tickets.Items);
 
         var threadResponse = await client.GetAsync($"/api/tickets/{ticket.Id}?page=1");
         Assert.Equal(HttpStatusCode.OK, threadResponse.StatusCode);
 
-        var thread = await threadResponse.Content.ReadFromJsonAsync<SupportTicketThreadDto>();
-        Assert.NotNull(thread);
-        Assert.Single(thread!.Messages);
+        var thread = await ReadDataAsync<SupportTicketThreadDto>(threadResponse);
+        Assert.Single(thread.Messages);
 
         var replyResponse = await client.PostAsJsonAsync($"/api/tickets/{ticket.Id}/reply", new ReplySupportTicketRequest
         {
@@ -138,6 +133,17 @@ public sealed class ProfileTabApiTests : IClassFixture<TestWebApplicationFactory
 
         Assert.Equal(HttpStatusCode.OK, registerResponse.StatusCode);
 
+        var registerPayload = await ReadDataAsync<RegisterResponseDto>(registerResponse);
+        Assert.False(string.IsNullOrWhiteSpace(registerPayload.EmailVerificationCode));
+
+        var verifyEmailResponse = await client.PostAsJsonAsync("/api/auth/verify-email", new VerifyEmailRequest
+        {
+            Email = email,
+            Code = registerPayload.EmailVerificationCode!
+        });
+
+        Assert.Equal(HttpStatusCode.OK, verifyEmailResponse.StatusCode);
+
         var loginResponse = await client.PostAsJsonAsync("/api/auth/login", new LoginRequest
         {
             Email = email,
@@ -146,8 +152,17 @@ public sealed class ProfileTabApiTests : IClassFixture<TestWebApplicationFactory
 
         Assert.Equal(HttpStatusCode.OK, loginResponse.StatusCode);
 
-        var loginPayload = await loginResponse.Content.ReadFromJsonAsync<AuthResponseDto>();
-        Assert.NotNull(loginPayload);
-        return loginPayload!.AccessToken;
+        var loginPayload = await ReadDataAsync<AuthResponseDto>(loginResponse);
+        return loginPayload.AccessToken;
+    }
+
+    private static async Task<T> ReadDataAsync<T>(HttpResponseMessage response)
+    {
+        var payload = await response.Content.ReadFromJsonAsync<ApiSuccessResponse<T>>();
+
+        Assert.NotNull(payload);
+        Assert.NotNull(payload!.Data);
+
+        return payload.Data;
     }
 }

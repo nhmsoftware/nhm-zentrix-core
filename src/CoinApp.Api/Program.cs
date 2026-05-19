@@ -64,8 +64,5 @@ static int GetPositiveInt(IConfiguration configuration, string key, int defaultV
 
 static bool GetBool(IConfiguration configuration, string key) =>
     bool.TryParse(configuration[key], out var value) && value;
-bạn để thêm expired_at vào code chưa nhỉ {{base_url}}/api/auth/verify-email
-tôi chỉ expired_at tầm 15p thôi ấy là hết hạn phải gửi lại gmail bằng api {{base_url}}/api/auth/resend-verification-email
+
 public partial class Program { }
-bạn để thêm expired_at vào code chưa nhỉ {{base_url}}/api/auth/verify-email
-tôi chỉ expired_at tầm 15p thôi ấy là hết hạn phải gửi lại gmail bằng api {{base_url}}/api/auth/resend-verification-email

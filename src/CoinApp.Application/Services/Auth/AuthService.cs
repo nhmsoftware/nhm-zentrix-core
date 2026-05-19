@@ -409,6 +409,53 @@ public sealed class AuthService : IAuthService
             ServiceMessageCodes.AuthPasswordResetCompleted);
     }
 
+    public async Task<ServiceResult<ChangePasswordResponseDto>> ChangePasswordAsync(ChangePasswordRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (!_currentUserContext.IsAuthenticated || !_currentUserContext.UserId.HasValue)
+        {
+            return ServiceResult<ChangePasswordResponseDto>.Failure(
+                ServiceErrorCodes.AuthUnauthenticated,
+                ServiceErrorCodes.AuthUnauthenticated);
+        }
+
+        var user = await _userRepository.GetByIdAsync(_currentUserContext.UserId.Value, cancellationToken);
+
+        if (user is null)
+        {
+            return ServiceResult<ChangePasswordResponseDto>.Failure(
+                ServiceErrorCodes.UserNotFound,
+                ServiceErrorCodes.UserNotFound);
+        }
+
+        if (!user.IsActive)
+        {
+            return ServiceResult<ChangePasswordResponseDto>.Failure(
+                ServiceErrorCodes.UserInactive,
+                ServiceErrorCodes.UserInactive);
+        }
+
+        var isCurrentPasswordValid = _passwordHashService.VerifyPassword(user, request.CurrentPassword, user.PasswordHash);
+
+        if (!isCurrentPasswordValid)
+        {
+            return ServiceResult<ChangePasswordResponseDto>.Failure(
+                ServiceErrorCodes.AuthCurrentPasswordInvalid,
+                ServiceErrorCodes.AuthCurrentPasswordInvalid);
+        }
+
+        user.PasswordHash = _passwordHashService.HashPassword(user, request.NewPassword);
+
+        _userRepository.Update(user);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await _accessTokenService.RevokeUserTokensAsync(user.Id, cancellationToken);
+
+        return ServiceResult<ChangePasswordResponseDto>.Success(
+            new ChangePasswordResponseDto(true),
+            ServiceMessageCodes.AuthPasswordChanged);
+    }
+
     public async Task<ServiceResult<AuthUserDto>> GetCurrentUserAsync(CancellationToken cancellationToken = default)
     {
         if (!_currentUserContext.IsAuthenticated || !_currentUserContext.UserId.HasValue)
