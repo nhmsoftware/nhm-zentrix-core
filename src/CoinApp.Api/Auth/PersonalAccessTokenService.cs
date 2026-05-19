@@ -61,6 +61,28 @@ public sealed class PersonalAccessTokenService : IAccessTokenService
         return true;
     }
 
+    public async Task<int> RevokeUserTokensAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var tokens = await _personalAccessTokenRepository.GetActiveByUserIdAsync(userId, cancellationToken);
+
+        if (tokens.Count == 0)
+        {
+            return 0;
+        }
+
+        var revokedAtUtc = DateTime.UtcNow;
+
+        foreach (var token in tokens)
+        {
+            token.RevokedAtUtc = revokedAtUtc;
+            _personalAccessTokenRepository.Update(token);
+        }
+
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return tokens.Count;
+    }
+
     private static string CreatePlainToken() =>
         Convert.ToHexString(RandomNumberGenerator.GetBytes(32)).ToLowerInvariant();
 }

@@ -27,6 +27,7 @@ public static class DependencyInjection
         services.AddScoped<IWalletService, WalletService>();
         services.AddScoped<ISupportTicketService, SupportTicketService>();
         services.AddSingleton(new EmailVerificationOptions());
+        services.AddSingleton(new PasswordResetOptions());
         services.AddValidatorsFromAssemblyContaining<RegisterRequestValidator>();
         services.AddValidatorsFromAssemblyContaining<GetCoinBySymbolRequestValidator>();
 

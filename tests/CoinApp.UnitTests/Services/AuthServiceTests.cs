@@ -1,5 +1,6 @@
 using CoinApp.Application.Common.Constants;
 using CoinApp.Application.Common.Interfaces;
+using CoinApp.Application.Common.Options;
 using CoinApp.Application.Dtos.Auth;
 using CoinApp.Application.Interfaces.Repositories;
 using CoinApp.Application.Services.Auth;
@@ -62,7 +63,8 @@ public sealed class AuthServiceTests
             FullName = "Alice Example",
             Email = "alice@example.com",
             PasswordHash = "hashed:CorrectPassword123!",
-            IsActive = true
+            IsActive = true,
+            EmailVerifiedAtUtc = DateTime.UtcNow
         };
 
         var service = CreateService(new FakeUserRepository(user));
@@ -79,17 +81,27 @@ public sealed class AuthServiceTests
 
     private static AuthService CreateService(
         IUserRepository? userRepository = null,
+        IEmailVerificationCodeRepository? emailVerificationCodeRepository = null,
+        IPasswordResetCodeRepository? passwordResetCodeRepository = null,
         IPasswordHashService? passwordHashService = null,
         IAccessTokenService? accessTokenService = null,
+        IEmailSender? emailSender = null,
         IUnitOfWork? unitOfWork = null,
-        ICurrentUserContext? currentUserContext = null)
+        ICurrentUserContext? currentUserContext = null,
+        EmailVerificationOptions? emailVerificationOptions = null,
+        PasswordResetOptions? passwordResetOptions = null)
     {
         return new AuthService(
             userRepository ?? new FakeUserRepository(),
+            emailVerificationCodeRepository ?? new FakeEmailVerificationCodeRepository(),
+            passwordResetCodeRepository ?? new FakePasswordResetCodeRepository(),
             passwordHashService ?? new FakePasswordHashService(),
             accessTokenService ?? new FakeAccessTokenService(),
+            emailSender ?? new FakeEmailSender(),
             unitOfWork ?? new FakeUnitOfWork(),
-            currentUserContext ?? new FakeCurrentUserContext());
+            currentUserContext ?? new FakeCurrentUserContext(),
+            emailVerificationOptions ?? new EmailVerificationOptions(),
+            passwordResetOptions ?? new PasswordResetOptions());
     }
 
     private sealed class FakeUserRepository : IUserRepository
@@ -129,6 +141,96 @@ public sealed class AuthServiceTests
 
         public Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default) =>
             Task.FromResult(_users.FirstOrDefault(x => x.Email == email));
+
+        public Task<User?> GetByReferralCodeAsync(string referralCode, CancellationToken cancellationToken = default) =>
+            Task.FromResult(_users.FirstOrDefault(x => x.ReferralCode == referralCode));
+    }
+
+    private sealed class FakeEmailVerificationCodeRepository : IEmailVerificationCodeRepository
+    {
+        private readonly List<EmailVerificationCode> _codes = new();
+
+        public IQueryable<EmailVerificationCode> Query() => _codes.AsQueryable();
+
+        public Task<EmailVerificationCode?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
+            Task.FromResult(_codes.FirstOrDefault(x => x.Id == id));
+
+        public Task AddAsync(EmailVerificationCode entity, CancellationToken cancellationToken = default)
+        {
+            _codes.Add(entity);
+            return Task.CompletedTask;
+        }
+
+        public void Update(EmailVerificationCode entity)
+        {
+        }
+
+        public void Delete(EmailVerificationCode entity)
+        {
+            _codes.Remove(entity);
+        }
+
+        public Task<bool> ExistsAsync(System.Linq.Expressions.Expression<Func<EmailVerificationCode, bool>> predicate, CancellationToken cancellationToken = default) =>
+            Task.FromResult(_codes.AsQueryable().Any(predicate));
+
+        public Task<CoinApp.Application.Common.Results.PaginatedResult<EmailVerificationCode>> PaginateAsync(IQueryable<EmailVerificationCode> query, int page, int pageSize, CancellationToken cancellationToken = default) =>
+            Task.FromResult(new CoinApp.Application.Common.Results.PaginatedResult<EmailVerificationCode>(_codes, 1, _codes.Count, _codes.Count));
+
+        public Task<EmailVerificationCode?> GetLatestPendingByEmailAsync(string email, CancellationToken cancellationToken = default) =>
+            Task.FromResult(_codes
+                .Where(x => x.Email == email && x.ConsumedAtUtc == null)
+                .OrderByDescending(x => x.CreatedAtUtc)
+                .FirstOrDefault());
+
+        public Task<IReadOnlyList<EmailVerificationCode>> GetPendingByEmailAsync(string email, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<EmailVerificationCode>>(_codes
+                .Where(x => x.Email == email && x.ConsumedAtUtc == null)
+                .ToList());
+    }
+
+    private sealed class FakePasswordResetCodeRepository : IPasswordResetCodeRepository
+    {
+        private readonly List<PasswordResetCode> _codes = new();
+
+        public IQueryable<PasswordResetCode> Query() => _codes.AsQueryable();
+
+        public Task<PasswordResetCode?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
+            Task.FromResult(_codes.FirstOrDefault(x => x.Id == id));
+
+        public Task AddAsync(PasswordResetCode entity, CancellationToken cancellationToken = default)
+        {
+            _codes.Add(entity);
+            return Task.CompletedTask;
+        }
+
+        public void Update(PasswordResetCode entity)
+        {
+        }
+
+        public void Delete(PasswordResetCode entity)
+        {
+            _codes.Remove(entity);
+        }
+
+        public Task<bool> ExistsAsync(System.Linq.Expressions.Expression<Func<PasswordResetCode, bool>> predicate, CancellationToken cancellationToken = default) =>
+            Task.FromResult(_codes.AsQueryable().Any(predicate));
+
+        public Task<CoinApp.Application.Common.Results.PaginatedResult<PasswordResetCode>> PaginateAsync(IQueryable<PasswordResetCode> query, int page, int pageSize, CancellationToken cancellationToken = default) =>
+            Task.FromResult(new CoinApp.Application.Common.Results.PaginatedResult<PasswordResetCode>(_codes, 1, _codes.Count, _codes.Count));
+
+        public Task<PasswordResetCode?> GetLatestPendingByEmailAsync(string email, CancellationToken cancellationToken = default) =>
+            Task.FromResult(_codes
+                .Where(x => x.Email == email && x.ConsumedAtUtc == null)
+                .OrderByDescending(x => x.CreatedAtUtc)
+                .FirstOrDefault());
+
+        public Task<IReadOnlyList<PasswordResetCode>> GetPendingByEmailAsync(string email, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<PasswordResetCode>>(_codes
+                .Where(x => x.Email == email && x.ConsumedAtUtc == null)
+                .ToList());
+
+        public Task<PasswordResetCode?> GetByResetTokenHashAsync(string resetTokenHash, CancellationToken cancellationToken = default) =>
+            Task.FromResult(_codes.FirstOrDefault(x => x.ResetTokenHash == resetTokenHash && x.ConsumedAtUtc == null));
     }
 
     private sealed class FakePasswordHashService : IPasswordHashService
@@ -141,8 +243,33 @@ public sealed class AuthServiceTests
 
     private sealed class FakeAccessTokenService : IAccessTokenService
     {
-        public AccessTokenDto CreateToken(User user) =>
-            new("fake-token", new DateTime(2030, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+        public Task<AccessTokenDto> CreateTokenAsync(User user, CancellationToken cancellationToken = default) =>
+            Task.FromResult(new AccessTokenDto("fake-token", new DateTime(2030, 1, 1, 0, 0, 0, DateTimeKind.Utc)));
+
+        public Task<bool> RevokeTokenAsync(Guid accessTokenId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(true);
+
+        public Task<int> RevokeUserTokensAsync(Guid userId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(0);
+    }
+
+    private sealed class FakeEmailSender : IEmailSender
+    {
+        public Task SendEmailVerificationCodeAsync(
+            string email,
+            string fullName,
+            string code,
+            DateTime expiresAtUtc,
+            CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
+
+        public Task SendPasswordResetCodeAsync(
+            string email,
+            string fullName,
+            string code,
+            DateTime expiresAtUtc,
+            CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
     }
 
     private sealed class FakeUnitOfWork : IUnitOfWork
@@ -172,6 +299,7 @@ public sealed class AuthServiceTests
     private sealed class FakeCurrentUserContext : ICurrentUserContext
     {
         public Guid? UserId { get; init; }
+        public Guid? AccessTokenId { get; init; }
         public string? UserName { get; init; }
         public bool IsAuthenticated { get; init; }
     }

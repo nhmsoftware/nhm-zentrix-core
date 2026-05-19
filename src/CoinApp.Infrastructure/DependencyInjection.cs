@@ -33,6 +33,7 @@ public static class DependencyInjection
         services.AddScoped<ICoinRepository, CoinRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IEmailVerificationCodeRepository, EmailVerificationCodeRepository>();
+        services.AddScoped<IPasswordResetCodeRepository, PasswordResetCodeRepository>();
         services.AddScoped<IPersonalAccessTokenRepository, PersonalAccessTokenRepository>();
         services.AddScoped<IBankRepository, BankRepository>();
         services.AddScoped<IAppConfigRepository, AppConfigRepository>();

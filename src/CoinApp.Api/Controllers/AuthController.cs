@@ -58,6 +58,30 @@ public sealed class AuthController : ApiControllerBase
         return FromResult(result);
     }
 
+    [AllowAnonymous]
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _authService.ForgotPasswordAsync(request, cancellationToken);
+        return FromResult(result);
+    }
+
+    [AllowAnonymous]
+    [HttpPost("verify-reset-code")]
+    public async Task<IActionResult> VerifyResetCode([FromBody] VerifyResetCodeRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _authService.VerifyResetCodeAsync(request, cancellationToken);
+        return FromResult(result);
+    }
+
+    [AllowAnonymous]
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _authService.ResetPasswordAsync(request, cancellationToken);
+        return FromResult(result);
+    }
+
     [Authorize]
     [HttpGet("me")]
     public async Task<IActionResult> GetCurrentUser(CancellationToken cancellationToken)

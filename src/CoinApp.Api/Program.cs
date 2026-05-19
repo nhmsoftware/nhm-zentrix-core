@@ -22,6 +22,13 @@ builder.Services.AddSingleton(new EmailVerificationOptions
     CodeExpirationMinutes = GetEmailVerificationCodeExpirationMinutes(builder.Configuration),
     ExposeCodeInResponse = GetEmailVerificationExposeCodeInResponse(builder.Configuration)
 });
+builder.Services.AddSingleton(new PasswordResetOptions
+{
+    CodeExpirationMinutes = GetPositiveInt(builder.Configuration, "PasswordReset:CodeExpirationMinutes", 15),
+    ResetTokenExpirationMinutes = GetPositiveInt(builder.Configuration, "PasswordReset:ResetTokenExpirationMinutes", 15),
+    MaxVerifyAttempts = GetPositiveInt(builder.Configuration, "PasswordReset:MaxVerifyAttempts", 5),
+    ExposeCodeInResponse = GetBool(builder.Configuration, "PasswordReset:ExposeCodeInResponse")
+});
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddScoped<ICurrentUserContext, HttpCurrentUserContext>();
 builder.Services.AddFluentValidationAutoValidation();
@@ -45,11 +52,20 @@ app.MapControllers();
 app.Run();
 
 static int GetEmailVerificationCodeExpirationMinutes(IConfiguration configuration) =>
-    int.TryParse(configuration["EmailVerification:CodeExpirationMinutes"], out var value) && value > 0
-        ? value
-        : 15;
+    GetPositiveInt(configuration, "EmailVerification:CodeExpirationMinutes", 15);
 
 static bool GetEmailVerificationExposeCodeInResponse(IConfiguration configuration) =>
-    bool.TryParse(configuration["EmailVerification:ExposeCodeInResponse"], out var value) && value;
+    GetBool(configuration, "EmailVerification:ExposeCodeInResponse");
 
+static int GetPositiveInt(IConfiguration configuration, string key, int defaultValue) =>
+    int.TryParse(configuration[key], out var value) && value > 0
+        ? value
+        : defaultValue;
+
+static bool GetBool(IConfiguration configuration, string key) =>
+    bool.TryParse(configuration[key], out var value) && value;
+bạn để thêm expired_at vào code chưa nhỉ {{base_url}}/api/auth/verify-email
+tôi chỉ expired_at tầm 15p thôi ấy là hết hạn phải gửi lại gmail bằng api {{base_url}}/api/auth/resend-verification-email
 public partial class Program { }
+bạn để thêm expired_at vào code chưa nhỉ {{base_url}}/api/auth/verify-email
+tôi chỉ expired_at tầm 15p thôi ấy là hết hạn phải gửi lại gmail bằng api {{base_url}}/api/auth/resend-verification-email

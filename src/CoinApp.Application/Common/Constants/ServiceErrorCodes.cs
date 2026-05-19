@@ -7,6 +7,16 @@ public static class ServiceErrorCodes
     public const string UnexpectedError = "common.unexpected_error";
     public const string AuthEmailAlreadyExists = "auth.email_already_exists";
     public const string AuthInvalidCredentials = "auth.invalid_credentials";
+    public const string AuthUnauthenticated = "auth.unauthenticated";
+    public const string AuthEmailNotVerified = "auth.email_not_verified";
+    public const string AuthEmailAlreadyVerified = "auth.email_already_verified";
+    public const string AuthEmailVerificationCodeInvalid = "auth.email_verification_code_invalid";
+    public const string AuthEmailVerificationCodeExpired = "auth.email_verification_code_expired";
+    public const string AuthReferralCodeInvalid = "auth.referral_code_invalid";
+    public const string AuthPasswordResetCodeInvalid = "auth.password_reset_code_invalid";
+    public const string AuthPasswordResetCodeExpired = "auth.password_reset_code_expired";
+    public const string AuthPasswordResetTokenInvalid = "auth.password_reset_token_invalid";
+    public const string AuthPasswordResetTokenExpired = "auth.password_reset_token_expired";
     public const string UserNotFound = "auth.user_not_found";
     public const string UserInactive = "auth.user_inactive";
     public const string ProfileInvalidVerificationData = "profile.invalid_verification_data";

@@ -14,31 +14,37 @@ public sealed class AuthService : IAuthService
 {
     private readonly IUserRepository _userRepository;
     private readonly IEmailVerificationCodeRepository _emailVerificationCodeRepository;
+    private readonly IPasswordResetCodeRepository _passwordResetCodeRepository;
     private readonly IPasswordHashService _passwordHashService;
     private readonly IAccessTokenService _accessTokenService;
     private readonly IEmailSender _emailSender;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserContext _currentUserContext;
     private readonly EmailVerificationOptions _emailVerificationOptions;
+    private readonly PasswordResetOptions _passwordResetOptions;
 
     public AuthService(
         IUserRepository userRepository,
         IEmailVerificationCodeRepository emailVerificationCodeRepository,
+        IPasswordResetCodeRepository passwordResetCodeRepository,
         IPasswordHashService passwordHashService,
         IAccessTokenService accessTokenService,
         IEmailSender emailSender,
         IUnitOfWork unitOfWork,
         ICurrentUserContext currentUserContext,
-        EmailVerificationOptions emailVerificationOptions)
+        EmailVerificationOptions emailVerificationOptions,
+        PasswordResetOptions passwordResetOptions)
     {
         _userRepository = userRepository;
         _emailVerificationCodeRepository = emailVerificationCodeRepository;
+        _passwordResetCodeRepository = passwordResetCodeRepository;
         _passwordHashService = passwordHashService;
         _accessTokenService = accessTokenService;
         _emailSender = emailSender;
         _unitOfWork = unitOfWork;
         _currentUserContext = currentUserContext;
         _emailVerificationOptions = emailVerificationOptions;
+        _passwordResetOptions = passwordResetOptions;
     }
 
     public async Task<ServiceResult<RegisterResponseDto>> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken = default)
@@ -243,6 +249,166 @@ public sealed class AuthService : IAuthService
         return ServiceResult<EmailVerificationResponseDto>.Success(CreateEmailVerificationResponse(user, expiresAtUtc, GetExposedCode(verificationCode)));
     }
 
+    public async Task<ServiceResult<ForgotPasswordResponseDto>> ForgotPasswordAsync(ForgotPasswordRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var normalizedEmail = NormalizeEmail(request.Email);
+        var user = await _userRepository.GetByEmailAsync(normalizedEmail, cancellationToken);
+
+        if (user is null || !user.IsActive)
+        {
+            return ServiceResult<ForgotPasswordResponseDto>.Success(
+                new ForgotPasswordResponseDto(normalizedEmail, null, null),
+                ServiceMessageCodes.AuthPasswordResetCodeSent);
+        }
+
+        var now = DateTime.UtcNow;
+        var pendingCodes = await _passwordResetCodeRepository.GetPendingByEmailAsync(normalizedEmail, cancellationToken);
+
+        foreach (var pendingCode in pendingCodes)
+        {
+            pendingCode.ConsumedAtUtc = now;
+            _passwordResetCodeRepository.Update(pendingCode);
+        }
+
+        var resetCode = CreateVerificationCode();
+        var expiresAtUtc = now.AddMinutes(GetPasswordResetCodeExpirationMinutes());
+        var passwordResetCode = new PasswordResetCode
+        {
+            UserId = user.Id,
+            Email = user.Email,
+            CodeHash = HashVerificationCode(user.Email, resetCode),
+            ExpiresAtUtc = expiresAtUtc
+        };
+
+        await _passwordResetCodeRepository.AddAsync(passwordResetCode, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await _emailSender.SendPasswordResetCodeAsync(user.Email, user.FullName, resetCode, expiresAtUtc, cancellationToken);
+
+        return ServiceResult<ForgotPasswordResponseDto>.Success(
+            new ForgotPasswordResponseDto(user.Email, expiresAtUtc, GetExposedPasswordResetCode(resetCode)),
+            ServiceMessageCodes.AuthPasswordResetCodeSent);
+    }
+
+    public async Task<ServiceResult<VerifyResetCodeResponseDto>> VerifyResetCodeAsync(VerifyResetCodeRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var normalizedEmail = NormalizeEmail(request.Email);
+        var user = await _userRepository.GetByEmailAsync(normalizedEmail, cancellationToken);
+
+        if (user is null || !user.IsActive)
+        {
+            return ServiceResult<VerifyResetCodeResponseDto>.Failure(
+                ServiceErrorCodes.AuthPasswordResetCodeInvalid,
+                ServiceErrorCodes.AuthPasswordResetCodeInvalid);
+        }
+
+        var resetCode = await _passwordResetCodeRepository.GetLatestPendingByEmailAsync(normalizedEmail, cancellationToken);
+
+        if (resetCode is null || resetCode.VerifiedAtUtc is not null)
+        {
+            return ServiceResult<VerifyResetCodeResponseDto>.Failure(
+                ServiceErrorCodes.AuthPasswordResetCodeInvalid,
+                ServiceErrorCodes.AuthPasswordResetCodeInvalid);
+        }
+
+        var now = DateTime.UtcNow;
+
+        if (resetCode.ExpiresAtUtc < now)
+        {
+            resetCode.ConsumedAtUtc = now;
+            _passwordResetCodeRepository.Update(resetCode);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            return ServiceResult<VerifyResetCodeResponseDto>.Failure(
+                ServiceErrorCodes.AuthPasswordResetCodeExpired,
+                ServiceErrorCodes.AuthPasswordResetCodeExpired);
+        }
+
+        var codeHash = HashVerificationCode(normalizedEmail, request.Code);
+
+        if (!string.Equals(resetCode.CodeHash, codeHash, StringComparison.Ordinal))
+        {
+            resetCode.AttemptCount++;
+
+            if (resetCode.AttemptCount >= GetPasswordResetMaxVerifyAttempts())
+            {
+                resetCode.ConsumedAtUtc = now;
+            }
+
+            _passwordResetCodeRepository.Update(resetCode);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            return ServiceResult<VerifyResetCodeResponseDto>.Failure(
+                ServiceErrorCodes.AuthPasswordResetCodeInvalid,
+                ServiceErrorCodes.AuthPasswordResetCodeInvalid);
+        }
+
+        var resetToken = CreateResetToken();
+        var resetTokenExpiresAtUtc = now.AddMinutes(GetPasswordResetTokenExpirationMinutes());
+        resetCode.VerifiedAtUtc = now;
+        resetCode.ResetTokenHash = HashResetToken(resetToken);
+        resetCode.ResetTokenExpiresAtUtc = resetTokenExpiresAtUtc;
+
+        _passwordResetCodeRepository.Update(resetCode);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return ServiceResult<VerifyResetCodeResponseDto>.Success(
+            new VerifyResetCodeResponseDto(user.Email, resetToken, resetTokenExpiresAtUtc),
+            ServiceMessageCodes.AuthPasswordResetCodeVerified);
+    }
+
+    public async Task<ServiceResult<ResetPasswordResponseDto>> ResetPasswordAsync(ResetPasswordRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var resetTokenHash = HashResetToken(request.ResetToken);
+        var resetCode = await _passwordResetCodeRepository.GetByResetTokenHashAsync(resetTokenHash, cancellationToken);
+
+        if (resetCode is null || resetCode.VerifiedAtUtc is null || resetCode.ResetTokenExpiresAtUtc is null)
+        {
+            return ServiceResult<ResetPasswordResponseDto>.Failure(
+                ServiceErrorCodes.AuthPasswordResetTokenInvalid,
+                ServiceErrorCodes.AuthPasswordResetTokenInvalid);
+        }
+
+        var now = DateTime.UtcNow;
+
+        if (resetCode.ResetTokenExpiresAtUtc < now)
+        {
+            resetCode.ConsumedAtUtc = now;
+            _passwordResetCodeRepository.Update(resetCode);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            return ServiceResult<ResetPasswordResponseDto>.Failure(
+                ServiceErrorCodes.AuthPasswordResetTokenExpired,
+                ServiceErrorCodes.AuthPasswordResetTokenExpired);
+        }
+
+        var user = await _userRepository.GetByIdAsync(resetCode.UserId, cancellationToken);
+
+        if (user is null || !user.IsActive)
+        {
+            return ServiceResult<ResetPasswordResponseDto>.Failure(
+                ServiceErrorCodes.AuthPasswordResetTokenInvalid,
+                ServiceErrorCodes.AuthPasswordResetTokenInvalid);
+        }
+
+        user.PasswordHash = _passwordHashService.HashPassword(user, request.Password);
+        resetCode.ConsumedAtUtc = now;
+
+        _userRepository.Update(user);
+        _passwordResetCodeRepository.Update(resetCode);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await _accessTokenService.RevokeUserTokensAsync(user.Id, cancellationToken);
+
+        return ServiceResult<ResetPasswordResponseDto>.Success(
+            new ResetPasswordResponseDto(true),
+            ServiceMessageCodes.AuthPasswordResetCompleted);
+    }
+
     public async Task<ServiceResult<AuthUserDto>> GetCurrentUserAsync(CancellationToken cancellationToken = default)
     {
         if (!_currentUserContext.IsAuthenticated || !_currentUserContext.UserId.HasValue)
@@ -335,11 +501,38 @@ public sealed class AuthService : IAuthService
         return Convert.ToHexString(bytes);
     }
 
+    private static string CreateResetToken() =>
+        Convert.ToHexString(RandomNumberGenerator.GetBytes(32)).ToLowerInvariant();
+
+    private static string HashResetToken(string token)
+    {
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(token.Trim()));
+        return Convert.ToHexString(bytes);
+    }
+
     private int GetCodeExpirationMinutes() =>
         _emailVerificationOptions.CodeExpirationMinutes > 0
             ? _emailVerificationOptions.CodeExpirationMinutes
             : 15;
 
+    private int GetPasswordResetCodeExpirationMinutes() =>
+        _passwordResetOptions.CodeExpirationMinutes > 0
+            ? _passwordResetOptions.CodeExpirationMinutes
+            : 15;
+
+    private int GetPasswordResetTokenExpirationMinutes() =>
+        _passwordResetOptions.ResetTokenExpirationMinutes > 0
+            ? _passwordResetOptions.ResetTokenExpirationMinutes
+            : 15;
+
+    private int GetPasswordResetMaxVerifyAttempts() =>
+        _passwordResetOptions.MaxVerifyAttempts > 0
+            ? _passwordResetOptions.MaxVerifyAttempts
+            : 5;
+
     private string? GetExposedCode(string? code) =>
         _emailVerificationOptions.ExposeCodeInResponse ? code : null;
+
+    private string? GetExposedPasswordResetCode(string? code) =>
+        _passwordResetOptions.ExposeCodeInResponse ? code : null;
 }

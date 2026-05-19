@@ -16,4 +16,11 @@ public sealed class PersonalAccessTokenRepository : BaseRepository<PersonalAcces
         return DbContext.PersonalAccessTokens
             .FirstOrDefaultAsync(x => x.TokenHash == tokenHash, cancellationToken);
     }
+
+    public async Task<IReadOnlyList<PersonalAccessToken>> GetActiveByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        return await DbContext.PersonalAccessTokens
+            .Where(x => x.UserId == userId && x.RevokedAtUtc == null && x.ExpiresAtUtc > DateTime.UtcNow)
+            .ToListAsync(cancellationToken);
+    }
 }
