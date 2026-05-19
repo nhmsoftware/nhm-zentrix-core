@@ -6,5 +6,5 @@ namespace CoinApp.Application.Interfaces.Repositories;
 public interface IUserRepository : IRepository<User>
 {
     Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default);
+    Task<User?> GetByReferralCodeAsync(string referralCode, CancellationToken cancellationToken = default);
 }
-

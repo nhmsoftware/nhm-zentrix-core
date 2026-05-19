@@ -15,4 +15,9 @@ public sealed class UserRepository : BaseRepository<User>, IUserRepository
     {
         return DbContext.Users.FirstOrDefaultAsync(x => x.Email == email, cancellationToken);
     }
+
+    public Task<User?> GetByReferralCodeAsync(string referralCode, CancellationToken cancellationToken = default)
+    {
+        return DbContext.Users.FirstOrDefaultAsync(x => x.ReferralCode == referralCode, cancellationToken);
+    }
 }

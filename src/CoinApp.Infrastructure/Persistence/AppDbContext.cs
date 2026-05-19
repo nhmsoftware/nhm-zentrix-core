@@ -11,6 +11,7 @@ public sealed class AppDbContext : DbContext
 
     public DbSet<Coin> Coins => Set<Coin>();
     public DbSet<User> Users => Set<User>();
+    public DbSet<EmailVerificationCode> EmailVerificationCodes => Set<EmailVerificationCode>();
     public DbSet<Bank> Banks => Set<Bank>();
     public DbSet<AppConfig> AppConfigs => Set<AppConfig>();
     public DbSet<TradingAccount> TradingAccounts => Set<TradingAccount>();

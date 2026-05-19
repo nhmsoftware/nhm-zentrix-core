@@ -20,14 +20,14 @@ public abstract class ApiControllerBase : ControllerBase
     {
         if (result.Succeeded)
         {
-            return Ok(result.Data);
+            var successMessageKey = result.MessageKey ?? ServiceMessageCodes.CommonSuccess;
+            return Ok(new ApiSuccessResponse<T>(
+                _localizedMessageService.Get(successMessageKey),
+                result.Data));
         }
 
         var messageKey = result.MessageKey ?? result.ErrorCode ?? ServiceErrorCodes.UnexpectedError;
-        var response = new ApiErrorResponse(
-            result.ErrorCode ?? ServiceErrorCodes.UnexpectedError,
-            messageKey,
-            _localizedMessageService.Get(messageKey));
+        var response = new ApiErrorResponse(_localizedMessageService.Get(messageKey));
 
         if (string.Equals(result.ErrorCode, ServiceErrorCodes.CoinNotFound, StringComparison.Ordinal))
         {
@@ -55,6 +55,11 @@ public abstract class ApiControllerBase : ControllerBase
         }
 
         if (string.Equals(result.ErrorCode, ServiceErrorCodes.UserInactive, StringComparison.Ordinal))
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, response);
+        }
+
+        if (string.Equals(result.ErrorCode, ServiceErrorCodes.AuthEmailNotVerified, StringComparison.Ordinal))
         {
             return StatusCode(StatusCodes.Status403Forbidden, response);
         }
