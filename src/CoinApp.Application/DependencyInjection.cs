@@ -6,6 +6,7 @@ using CoinApp.Application.Services.Market;
 using CoinApp.Application.Services.Profile;
 using CoinApp.Application.Services.SupportTickets;
 using CoinApp.Application.Services.Wallet;
+using CoinApp.Application.Common.Options;
 using CoinApp.Application.Validators.Auth;
 using CoinApp.Application.Validators.Market;
 using FluentValidation;
@@ -25,6 +26,7 @@ public static class DependencyInjection
         services.AddScoped<ITradingAccountService, TradingAccountService>();
         services.AddScoped<IWalletService, WalletService>();
         services.AddScoped<ISupportTicketService, SupportTicketService>();
+        services.AddSingleton(new EmailVerificationOptions());
         services.AddValidatorsFromAssemblyContaining<RegisterRequestValidator>();
         services.AddValidatorsFromAssemblyContaining<GetCoinBySymbolRequestValidator>();
 

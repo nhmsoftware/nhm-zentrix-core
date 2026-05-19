@@ -1,5 +1,6 @@
 using CoinApp.Application.Common.Interfaces;
 using CoinApp.Application.Interfaces.Repositories;
+using CoinApp.Infrastructure.Email;
 using CoinApp.Infrastructure.Persistence;
 using CoinApp.Infrastructure.Repositories;
 using CoinApp.Infrastructure.Storage;
@@ -31,6 +32,7 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
         services.AddScoped<ICoinRepository, CoinRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IEmailVerificationCodeRepository, EmailVerificationCodeRepository>();
         services.AddScoped<IBankRepository, BankRepository>();
         services.AddScoped<IAppConfigRepository, AppConfigRepository>();
         services.AddScoped<ITradingAccountRepository, TradingAccountRepository>();
@@ -38,6 +40,7 @@ public static class DependencyInjection
         services.AddScoped<ISupportTicketRepository, SupportTicketRepository>();
         services.AddScoped<ISupportTicketMessageRepository, SupportTicketMessageRepository>();
         services.AddScoped<IFileStorageService, LocalFileStorageService>();
+        services.AddScoped<IEmailSender, SmtpEmailSender>();
 
         return services;
     }

@@ -35,6 +35,22 @@ public sealed class AuthController : ApiControllerBase
     }
 
     [AllowAnonymous]
+    [HttpPost("verify-email")]
+    public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _authService.VerifyEmailAsync(request, cancellationToken);
+        return FromResult(result);
+    }
+
+    [AllowAnonymous]
+    [HttpPost("resend-verification-email")]
+    public async Task<IActionResult> ResendVerificationEmail([FromBody] ResendEmailVerificationRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _authService.ResendEmailVerificationAsync(request, cancellationToken);
+        return FromResult(result);
+    }
+
+    [AllowAnonymous]
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken cancellationToken)
     {
