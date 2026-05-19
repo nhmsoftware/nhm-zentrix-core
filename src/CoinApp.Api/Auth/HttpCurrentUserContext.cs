@@ -21,8 +21,16 @@ public sealed class HttpCurrentUserContext : ICurrentUserContext
         }
     }
 
+    public Guid? AccessTokenId
+    {
+        get
+        {
+            var value = _httpContextAccessor.HttpContext?.User.FindFirstValue(PersonalAccessTokenAuthenticationHandler.AccessTokenIdClaimType);
+            return Guid.TryParse(value, out var accessTokenId) ? accessTokenId : null;
+        }
+    }
+
     public string? UserName => _httpContextAccessor.HttpContext?.User.Identity?.Name;
 
     public bool IsAuthenticated => _httpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated == true;
 }
-

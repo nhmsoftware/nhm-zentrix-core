@@ -140,7 +140,7 @@ public sealed class AuthService : IAuthService
                 ServiceErrorCodes.AuthInvalidCredentials);
         }
 
-        return ServiceResult<AuthResponseDto>.Success(CreateAuthResponse(user));
+        return ServiceResult<AuthResponseDto>.Success(await CreateAuthResponseAsync(user, cancellationToken));
     }
 
     public async Task<ServiceResult<EmailVerificationResponseDto>> VerifyEmailAsync(VerifyEmailRequest request, CancellationToken cancellationToken = default)
@@ -271,14 +271,30 @@ public sealed class AuthService : IAuthService
         return ServiceResult<AuthUserDto>.Success(MapUser(user));
     }
 
-    public Task<ServiceResult<LogoutResponseDto>> LogoutAsync(CancellationToken cancellationToken = default)
+    public async Task<ServiceResult<LogoutResponseDto>> LogoutAsync(CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(ServiceResult<LogoutResponseDto>.Success(new LogoutResponseDto(true)));
+        if (!_currentUserContext.IsAuthenticated || !_currentUserContext.AccessTokenId.HasValue)
+        {
+            return ServiceResult<LogoutResponseDto>.Failure(
+                ServiceErrorCodes.AuthUnauthenticated,
+                ServiceErrorCodes.AuthUnauthenticated);
+        }
+
+        var revoked = await _accessTokenService.RevokeTokenAsync(_currentUserContext.AccessTokenId.Value, cancellationToken);
+
+        if (!revoked)
+        {
+            return ServiceResult<LogoutResponseDto>.Failure(
+                ServiceErrorCodes.AuthUnauthenticated,
+                ServiceErrorCodes.AuthUnauthenticated);
+        }
+
+        return ServiceResult<LogoutResponseDto>.Success(new LogoutResponseDto(true));
     }
 
-    private AuthResponseDto CreateAuthResponse(User user)
+    private async Task<AuthResponseDto> CreateAuthResponseAsync(User user, CancellationToken cancellationToken)
     {
-        var token = _accessTokenService.CreateToken(user);
+        var token = await _accessTokenService.CreateTokenAsync(user, cancellationToken);
 
         return new AuthResponseDto(
             MapUser(user),

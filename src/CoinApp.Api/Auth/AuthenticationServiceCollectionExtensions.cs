@@ -1,9 +1,5 @@
-using System.Security.Claims;
-using System.Text;
 using CoinApp.Application.Common.Interfaces;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Authentication;
 
 namespace CoinApp.Api.Auth;
 
@@ -14,38 +10,15 @@ public static class AuthenticationServiceCollectionExtensions
         var jwtSection = configuration.GetSection(JwtOptions.SectionName);
 
         services.AddOptions<JwtOptions>()
-            .Bind(jwtSection)
-            .Validate(options =>
-                !string.IsNullOrWhiteSpace(options.Issuer) &&
-                !string.IsNullOrWhiteSpace(options.Audience) &&
-                !string.IsNullOrWhiteSpace(options.SigningKey),
-                "Jwt configuration is missing or invalid.");
+            .Bind(jwtSection);
 
         services.AddScoped<IPasswordHashService, PasswordHashService>();
-        services.AddScoped<IAccessTokenService, JwtAccessTokenService>();
+        services.AddScoped<IAccessTokenService, PersonalAccessTokenService>();
 
-        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer();
-
-        services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
-            .Configure<IOptions<JwtOptions>>((options, jwtOptionsAccessor) =>
-            {
-                var jwtOptions = jwtOptionsAccessor.Value;
-
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SigningKey)),
-                    ValidateIssuer = true,
-                    ValidIssuer = jwtOptions.Issuer,
-                    ValidateAudience = true,
-                    ValidAudience = jwtOptions.Audience,
-                    ValidateLifetime = true,
-                    ClockSkew = TimeSpan.Zero,
-                    NameClaimType = ClaimTypes.Name,
-                    RoleClaimType = ClaimTypes.Role
-                };
-            });
+        services.AddAuthentication(PersonalAccessTokenAuthenticationHandler.SchemeName)
+            .AddScheme<AuthenticationSchemeOptions, PersonalAccessTokenAuthenticationHandler>(
+                PersonalAccessTokenAuthenticationHandler.SchemeName,
+                _ => { });
 
         return services;
     }
