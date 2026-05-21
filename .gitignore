@@ -16,4 +16,4 @@ TestResults/
 *.vspscc
 *.ncrunch*
 coverage/
-.agents
+*appsettings.Development.json
