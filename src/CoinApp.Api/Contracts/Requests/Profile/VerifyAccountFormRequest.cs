@@ -14,7 +14,7 @@ public sealed class VerifyAccountFormRequest
     public DateOnly Dob { get; set; }
 
     [FromForm(Name = "gender")]
-    public string Gender { get; set; } = string.Empty;
+    public int Gender { get; set; }
 
     [FromForm(Name = "phone_number")]
     public string PhoneNumber { get; set; } = string.Empty;

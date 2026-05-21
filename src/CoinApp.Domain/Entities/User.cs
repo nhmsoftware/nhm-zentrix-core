@@ -7,6 +7,7 @@ public sealed class User : BaseEntity
     public string FullName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string PasswordHash { get; set; } = string.Empty;
+    public AdminRole AdminRole { get; set; } = AdminRole.None;
     public DateTime? EmailVerifiedAtUtc { get; set; }
     public bool IsActive { get; set; } = true;
     public string? FirstName { get; set; }

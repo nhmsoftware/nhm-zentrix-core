@@ -99,6 +99,14 @@ public sealed class AuthController : ApiControllerBase
     }
 
     [Authorize]
+    [HttpPut("user-profile")]
+    public async Task<IActionResult> UpdateUserProfile([FromBody] UpdateProfileRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _profileService.UpdateProfileAsync(request, cancellationToken);
+        return FromResult(result);
+    }
+
+    [Authorize]
     [HttpPost("change-password")]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request, CancellationToken cancellationToken)
     {

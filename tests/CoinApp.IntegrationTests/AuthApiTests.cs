@@ -5,6 +5,7 @@ using CoinApp.Api.Auth;
 using CoinApp.Api.Contracts.Responses;
 using CoinApp.Application.Dtos.Auth;
 using CoinApp.Domain.Entities;
+using CoinApp.Domain.Enums;
 using CoinApp.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
@@ -268,6 +269,63 @@ public sealed class AuthApiTests : IClassFixture<TestWebApplicationFactory>
         Assert.Equal(HttpStatusCode.OK, newPasswordLoginResponse.StatusCode);
     }
 
+    [Fact]
+    public async Task AdminLogin_AllowsAdminUser_AndReturnsAdminMe()
+    {
+        var client = CreateClient();
+        var email = $"admin-{Guid.NewGuid():N}@example.com";
+        const string password = "Admin123!";
+
+        await SeedUserAsync("Admin Example", email, password, emailVerified: true, adminRole: AdminRole.SuperAdmin);
+
+        var loginResponse = await client.PostAsJsonAsync("/api/admin/auth/login", new LoginRequest
+        {
+            Email = email.ToUpperInvariant(),
+            Password = password
+        });
+
+        Assert.Equal(HttpStatusCode.OK, loginResponse.StatusCode);
+
+        var loginPayload = await ReadDataAsync<AuthResponseDto>(loginResponse);
+
+        Assert.Equal(nameof(AdminRole.SuperAdmin), loginPayload.User.AdminRole);
+        Assert.False(string.IsNullOrWhiteSpace(loginPayload.AccessToken));
+
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", loginPayload.AccessToken);
+
+        var meResponse = await client.GetAsync("/api/admin/auth/me");
+
+        Assert.Equal(HttpStatusCode.OK, meResponse.StatusCode);
+
+        var mePayload = await ReadDataAsync<AuthUserDto>(meResponse);
+
+        Assert.Equal(loginPayload.User.Id, mePayload.Id);
+        Assert.Equal(nameof(AdminRole.SuperAdmin), mePayload.AdminRole);
+    }
+
+    [Fact]
+    public async Task AdminLogin_ReturnsForbidden_WhenUserIsNotAdmin()
+    {
+        var client = CreateClient();
+        var email = $"regular-{Guid.NewGuid():N}@example.com";
+        const string password = "Password123!";
+
+        await SeedUserAsync("Regular Example", email, password, emailVerified: true);
+
+        var loginResponse = await client.PostAsJsonAsync("/api/admin/auth/login", new LoginRequest
+        {
+            Email = email,
+            Password = password
+        });
+
+        Assert.Equal(HttpStatusCode.Forbidden, loginResponse.StatusCode);
+
+        var error = await loginResponse.Content.ReadFromJsonAsync<ApiErrorResponse>();
+
+        Assert.NotNull(error);
+        Assert.Equal("Tài khoản không có quyền truy cập trang quản trị.", error!.Message);
+    }
+
     private static async Task<T> ReadDataAsync<T>(HttpResponseMessage response)
     {
         var payload = await response.Content.ReadFromJsonAsync<ApiSuccessResponse<T>>();
@@ -286,7 +344,12 @@ public sealed class AuthApiTests : IClassFixture<TestWebApplicationFactory>
         });
     }
 
-    private async Task SeedUserAsync(string fullName, string email, string password, bool emailVerified = false)
+    private async Task SeedUserAsync(
+        string fullName,
+        string email,
+        string password,
+        bool emailVerified = false,
+        AdminRole adminRole = AdminRole.None)
     {
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -296,6 +359,7 @@ public sealed class AuthApiTests : IClassFixture<TestWebApplicationFactory>
             FullName = fullName,
             Email = email.ToLowerInvariant(),
             IsActive = true,
+            AdminRole = adminRole,
             EmailVerifiedAtUtc = emailVerified ? DateTime.UtcNow : null
         };
 

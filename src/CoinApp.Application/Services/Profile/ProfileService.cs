@@ -48,6 +48,36 @@ public sealed class ProfileService : IProfileService
         return ServiceResult<UserProfileDto>.Success(MapUserProfile(user));
     }
 
+    public async Task<ServiceResult<UserProfileDto>> UpdateProfileAsync(UpdateProfileRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var user = await GetCurrentActiveUserAsync(cancellationToken);
+
+        if (user is null)
+        {
+            return ServiceResult<UserProfileDto>.Failure(ServiceErrorCodes.UserNotFound, ServiceErrorCodes.UserNotFound);
+        }
+
+        if (!TryParseGender(request.Gender, out var gender))
+        {
+            return ServiceResult<UserProfileDto>.Failure(ServiceErrorCodes.ProfileInvalidGender, ServiceErrorCodes.ProfileInvalidGender);
+        }
+
+        user.FirstName = request.FirstName.Trim();
+        user.LastName = request.LastName.Trim();
+        user.FullName = $"{user.FirstName} {user.LastName}".Trim();
+        user.DateOfBirth = request.DateOfBirth;
+        user.Gender = gender;
+        user.PhoneNumber = request.PhoneNumber.Trim();
+        user.Address = request.Address.Trim();
+
+        _userRepository.Update(user);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return ServiceResult<UserProfileDto>.Success(MapUserProfile(user), ServiceMessageCodes.ProfileUpdated);
+    }
+
     public async Task<ServiceResult<UserProfileDto>> SubmitAccountVerificationAsync(SubmitAccountVerificationRequest request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -140,12 +170,12 @@ public sealed class ProfileService : IProfileService
                !string.IsNullOrWhiteSpace(request.AccountBankName);
     }
 
-    private static bool TryParseGender(string value, out UserGender gender)
+    private static bool TryParseGender(int value, out UserGender gender)
     {
-        gender = value.Trim().ToLowerInvariant() switch
+        gender = value switch
         {
-            UserGenderCodes.Male => UserGender.Male,
-            UserGenderCodes.Female => UserGender.Female,
+            (int)UserGender.Male => UserGender.Male,
+            (int)UserGender.Female => UserGender.Female,
             _ => UserGender.Unspecified
         };
 

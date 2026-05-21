@@ -7,6 +7,7 @@ using CoinApp.Application.Common.Results;
 using CoinApp.Application.Dtos.Auth;
 using CoinApp.Application.Interfaces.Repositories;
 using CoinApp.Domain.Entities;
+using CoinApp.Domain.Enums;
 
 namespace CoinApp.Application.Services.Auth;
 
@@ -113,37 +114,31 @@ public sealed class AuthService : IAuthService
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var normalizedEmail = NormalizeEmail(request.Email);
-        var user = await _userRepository.GetByEmailAsync(normalizedEmail, cancellationToken);
+        var userResult = await ValidateLoginCredentialsAsync(request, cancellationToken);
 
-        if (user is null)
+        return userResult.Succeeded && userResult.Data is not null
+            ? ServiceResult<AuthResponseDto>.Success(await CreateAuthResponseAsync(userResult.Data, cancellationToken))
+            : ServiceResult<AuthResponseDto>.Failure(userResult.ErrorCode!, userResult.MessageKey);
+    }
+
+    public async Task<ServiceResult<AuthResponseDto>> AdminLoginAsync(LoginRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var userResult = await ValidateLoginCredentialsAsync(request, cancellationToken);
+
+        if (!userResult.Succeeded || userResult.Data is null)
         {
-            return ServiceResult<AuthResponseDto>.Failure(
-                ServiceErrorCodes.AuthInvalidCredentials,
-                ServiceErrorCodes.AuthInvalidCredentials);
+            return ServiceResult<AuthResponseDto>.Failure(userResult.ErrorCode!, userResult.MessageKey);
         }
 
-        if (!user.IsActive)
+        var user = userResult.Data;
+
+        if (user.AdminRole == AdminRole.None)
         {
             return ServiceResult<AuthResponseDto>.Failure(
-                ServiceErrorCodes.UserInactive,
-                ServiceErrorCodes.UserInactive);
-        }
-
-        if (user.EmailVerifiedAtUtc is null)
-        {
-            return ServiceResult<AuthResponseDto>.Failure(
-                ServiceErrorCodes.AuthEmailNotVerified,
-                ServiceErrorCodes.AuthEmailNotVerified);
-        }
-
-        var isPasswordValid = _passwordHashService.VerifyPassword(user, request.Password, user.PasswordHash);
-
-        if (!isPasswordValid)
-        {
-            return ServiceResult<AuthResponseDto>.Failure(
-                ServiceErrorCodes.AuthInvalidCredentials,
-                ServiceErrorCodes.AuthInvalidCredentials);
+                ServiceErrorCodes.AuthAdminForbidden,
+                ServiceErrorCodes.AuthAdminForbidden);
         }
 
         return ServiceResult<AuthResponseDto>.Success(await CreateAuthResponseAsync(user, cancellationToken));
@@ -484,6 +479,25 @@ public sealed class AuthService : IAuthService
         return ServiceResult<AuthUserDto>.Success(MapUser(user));
     }
 
+    public async Task<ServiceResult<AuthUserDto>> GetCurrentAdminUserAsync(CancellationToken cancellationToken = default)
+    {
+        var result = await GetCurrentUserAsync(cancellationToken);
+
+        if (!result.Succeeded || result.Data is null)
+        {
+            return result;
+        }
+
+        if (string.Equals(result.Data.AdminRole, AdminRole.None.ToString(), StringComparison.Ordinal))
+        {
+            return ServiceResult<AuthUserDto>.Failure(
+                ServiceErrorCodes.AuthAdminForbidden,
+                ServiceErrorCodes.AuthAdminForbidden);
+        }
+
+        return result;
+    }
+
     public async Task<ServiceResult<LogoutResponseDto>> LogoutAsync(CancellationToken cancellationToken = default)
     {
         if (!_currentUserContext.IsAuthenticated || !_currentUserContext.AccessTokenId.HasValue)
@@ -515,6 +529,44 @@ public sealed class AuthService : IAuthService
             token.ExpiresAtUtc);
     }
 
+    private async Task<ServiceResult<User>> ValidateLoginCredentialsAsync(LoginRequest request, CancellationToken cancellationToken)
+    {
+        var normalizedEmail = NormalizeEmail(request.Email);
+        var user = await _userRepository.GetByEmailAsync(normalizedEmail, cancellationToken);
+
+        if (user is null)
+        {
+            return ServiceResult<User>.Failure(
+                ServiceErrorCodes.AuthInvalidCredentials,
+                ServiceErrorCodes.AuthInvalidCredentials);
+        }
+
+        if (!user.IsActive)
+        {
+            return ServiceResult<User>.Failure(
+                ServiceErrorCodes.UserInactive,
+                ServiceErrorCodes.UserInactive);
+        }
+
+        if (user.EmailVerifiedAtUtc is null)
+        {
+            return ServiceResult<User>.Failure(
+                ServiceErrorCodes.AuthEmailNotVerified,
+                ServiceErrorCodes.AuthEmailNotVerified);
+        }
+
+        var isPasswordValid = _passwordHashService.VerifyPassword(user, request.Password, user.PasswordHash);
+
+        if (!isPasswordValid)
+        {
+            return ServiceResult<User>.Failure(
+                ServiceErrorCodes.AuthInvalidCredentials,
+                ServiceErrorCodes.AuthInvalidCredentials);
+        }
+
+        return ServiceResult<User>.Success(user);
+    }
+
     private EmailVerificationResponseDto CreateEmailVerificationResponse(
         User user,
         DateTime? verificationCodeExpiresAtUtc,
@@ -527,7 +579,7 @@ public sealed class AuthService : IAuthService
             GetExposedCode(verificationCode));
 
     private static AuthUserDto MapUser(User user) =>
-        new(user.Id, user.FullName, user.Email, user.IsActive, user.EmailVerifiedAtUtc is not null);
+        new(user.Id, user.FullName, user.Email, user.AdminRole.ToString(), user.IsActive, user.EmailVerifiedAtUtc is not null);
 
     private static string NormalizeEmail(string email) =>
         email.Trim().ToLowerInvariant();

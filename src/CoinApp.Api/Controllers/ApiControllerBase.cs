@@ -69,6 +69,11 @@ public abstract class ApiControllerBase : ControllerBase
             return StatusCode(StatusCodes.Status403Forbidden, response);
         }
 
+        if (string.Equals(result.ErrorCode, ServiceErrorCodes.AuthAdminForbidden, StringComparison.Ordinal))
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, response);
+        }
+
         if (string.Equals(result.ErrorCode, ServiceErrorCodes.AuthEmailNotVerified, StringComparison.Ordinal))
         {
             return StatusCode(StatusCodes.Status403Forbidden, response);

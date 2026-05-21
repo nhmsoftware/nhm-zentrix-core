@@ -46,8 +46,6 @@ public static class LocalizationServiceCollectionExtensions
                             .ToArray());
 
                 return new BadRequestObjectResult(new ValidationErrorResponse(
-                    ServiceErrorCodes.ValidationFailed,
-                    ServiceErrorCodes.ValidationFailed,
                     localizedMessageService.Get(ServiceErrorCodes.ValidationFailed),
                     errors));
             };
@@ -64,4 +62,3 @@ public static class LocalizationServiceCollectionExtensions
         return app;
     }
 }
-

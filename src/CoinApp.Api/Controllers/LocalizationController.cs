@@ -21,10 +21,7 @@ public sealed class LocalizationController : ControllerBase
         if (!LocalizationConstants.SupportedCultures.Contains(culture, StringComparer.OrdinalIgnoreCase))
         {
             var messageKey = "culture.unsupported";
-            return BadRequest(new ApiErrorResponse(
-                messageKey,
-                messageKey,
-                _localizedMessageService.Get(messageKey)));
+            return BadRequest(new ApiErrorResponse(_localizedMessageService.Get(messageKey)));
         }
 
         var normalizedCulture = culture.Trim().ToLowerInvariant();
@@ -41,6 +38,8 @@ public sealed class LocalizationController : ControllerBase
                 SameSite = SameSiteMode.Lax
             });
 
-        return NoContent();
+        return Ok(new ApiSuccessResponse<object?>(
+            _localizedMessageService.Get("common.success"),
+            null));
     }
 }

@@ -4,5 +4,6 @@ public sealed record AuthUserDto(
     Guid Id,
     string FullName,
     string Email,
-    bool IsActive);
-
+    string AdminRole,
+    bool IsActive,
+    bool EmailVerified);

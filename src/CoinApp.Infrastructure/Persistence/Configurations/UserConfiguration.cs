@@ -31,6 +31,13 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
             .HasMaxLength(500)
             .IsRequired();
 
+        builder.Property(x => x.AdminRole)
+            .HasConversion<int>()
+            .HasDefaultValue(AdminRole.None);
+
+        builder.Property(x => x.EmailVerifiedAtUtc)
+            .HasColumnType("timestamp with time zone");
+
         builder.Property(x => x.IsActive)
             .HasDefaultValue(true);
 
@@ -60,6 +67,13 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(x => x.ReferralCode)
             .HasMaxLength(32)
             .HasDefaultValue(string.Empty);
+
+        builder.HasIndex(x => x.ReferralCode)
+            .IsUnique();
+
+        builder.Property(x => x.ReferrerId);
+
+        builder.HasIndex(x => x.ReferrerId);
 
         builder.Property(x => x.MoneyBalance)
             .HasPrecision(18, 2)

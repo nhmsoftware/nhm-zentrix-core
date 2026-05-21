@@ -5,6 +5,7 @@ using CoinApp.Application;
 using CoinApp.Application.Common.Interfaces;
 using CoinApp.Application.Common.Options;
 using CoinApp.Infrastructure;
+using CoinApp.Infrastructure.Persistence;
 using FluentValidation.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -48,6 +49,8 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
+await app.Services.SeedAdminUserAsync(app.Configuration);
 
 app.Run();
 

@@ -28,6 +28,12 @@ public sealed class RegisterRequestValidator : AbstractValidator<RegisterRequest
             .WithMessage("validation.auth_password_min_length")
             .MaximumLength(128)
             .WithMessage("validation.auth_password_max_length");
+
+        RuleFor(x => x.ReferralCode)
+            .MaximumLength(32)
+            .WithMessage("validation.auth_referral_code_length")
+            .Matches("^[A-Za-z0-9]*$")
+            .WithMessage("validation.auth_referral_code_format")
+            .When(x => !string.IsNullOrWhiteSpace(x.ReferralCode));
     }
 }
-

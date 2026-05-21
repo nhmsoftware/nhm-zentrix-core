@@ -35,6 +35,29 @@ public sealed class ProfileTabApiTests : IClassFixture<TestWebApplicationFactory
         Assert.False(string.IsNullOrWhiteSpace(profile.ReferralCode));
         Assert.Equal("unverified", profile.VerificationStatus);
 
+        var updateProfileResponse = await client.PutAsJsonAsync("/api/auth/user-profile", new UpdateProfileRequest
+        {
+            FirstName = "Alice",
+            LastName = "Updated",
+            DateOfBirth = new DateOnly(1992, 5, 20),
+            Gender = 2,
+            PhoneNumber = "0912345678",
+            Address = "Da Nang City"
+        });
+
+        Assert.Equal(HttpStatusCode.OK, updateProfileResponse.StatusCode);
+
+        var updatedProfile = await ReadDataAsync<UserProfileDto>(updateProfileResponse);
+        Assert.Equal("Alice Updated", updatedProfile.FullName);
+        Assert.Equal("Alice", updatedProfile.FirstName);
+        Assert.Equal("Updated", updatedProfile.LastName);
+        Assert.Equal(new DateOnly(1992, 5, 20), updatedProfile.DateOfBirth);
+        Assert.Equal("female", updatedProfile.Gender);
+        Assert.Equal(2, updatedProfile.GenderValue);
+        Assert.Equal("0912345678", updatedProfile.PhoneNumber);
+        Assert.Equal("Da Nang City", updatedProfile.Address);
+        Assert.Null(updatedProfile.Bank);
+
         var banksResponse = await client.GetAsync("/api/common/banks");
         Assert.Equal(HttpStatusCode.OK, banksResponse.StatusCode);
         Assert.NotNull(await ReadDataAsync<IReadOnlyList<BankDto>>(banksResponse));
@@ -98,7 +121,7 @@ public sealed class ProfileTabApiTests : IClassFixture<TestWebApplicationFactory
             { new StringContent("Alice"), "first_name" },
             { new StringContent("Example"), "last_name" },
             { new StringContent("1990-01-01"), "dob" },
-            { new StringContent("female"), "gender" },
+            { new StringContent("2"), "gender" },
             { new StringContent("0900000000"), "phone_number" },
             { new StringContent("Ho Chi Minh City"), "address" },
             { new StringContent("970436"), "bin_bank" },
