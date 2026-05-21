@@ -107,7 +107,8 @@ public sealed class AuthService : IAuthService
             MapUser(user),
             true,
             expiresAtUtc,
-            GetExposedCode(verificationCode)));
+            GetExposedCode(verificationCode)),
+            ServiceMessageCodes.AuthRegistered);
     }
 
     public async Task<ServiceResult<AuthResponseDto>> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default)
@@ -160,7 +161,9 @@ public sealed class AuthService : IAuthService
 
         if (user.EmailVerifiedAtUtc is not null)
         {
-            return ServiceResult<EmailVerificationResponseDto>.Success(CreateEmailVerificationResponse(user, null, null));
+            return ServiceResult<EmailVerificationResponseDto>.Success(
+                CreateEmailVerificationResponse(user, null, null),
+                ServiceMessageCodes.AuthEmailAlreadyVerified);
         }
 
         var verification = await _emailVerificationCodeRepository.GetLatestPendingByEmailAsync(normalizedEmail, cancellationToken);
@@ -196,7 +199,9 @@ public sealed class AuthService : IAuthService
         _userRepository.Update(user);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return ServiceResult<EmailVerificationResponseDto>.Success(CreateEmailVerificationResponse(user, null, null));
+        return ServiceResult<EmailVerificationResponseDto>.Success(
+            CreateEmailVerificationResponse(user, null, null),
+            ServiceMessageCodes.AuthEmailVerified);
     }
 
     public async Task<ServiceResult<EmailVerificationResponseDto>> ResendEmailVerificationAsync(ResendEmailVerificationRequest request, CancellationToken cancellationToken = default)
@@ -215,7 +220,9 @@ public sealed class AuthService : IAuthService
 
         if (user.EmailVerifiedAtUtc is not null)
         {
-            return ServiceResult<EmailVerificationResponseDto>.Success(CreateEmailVerificationResponse(user, null, null));
+            return ServiceResult<EmailVerificationResponseDto>.Success(
+                CreateEmailVerificationResponse(user, null, null),
+                ServiceMessageCodes.AuthEmailAlreadyVerified);
         }
 
         var now = DateTime.UtcNow;
@@ -241,7 +248,9 @@ public sealed class AuthService : IAuthService
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         await _emailSender.SendEmailVerificationCodeAsync(user.Email, user.FullName, verificationCode, expiresAtUtc, cancellationToken);
 
-        return ServiceResult<EmailVerificationResponseDto>.Success(CreateEmailVerificationResponse(user, expiresAtUtc, GetExposedCode(verificationCode)));
+        return ServiceResult<EmailVerificationResponseDto>.Success(
+            CreateEmailVerificationResponse(user, expiresAtUtc, GetExposedCode(verificationCode)),
+            ServiceMessageCodes.AuthEmailVerificationCodeSent);
     }
 
     public async Task<ServiceResult<ForgotPasswordResponseDto>> ForgotPasswordAsync(ForgotPasswordRequest request, CancellationToken cancellationToken = default)

@@ -33,6 +33,15 @@
   <data name="common.success" xml:space="preserve">
     <value>Success.</value>
   </data>
+  <data name="auth.registered" xml:space="preserve">
+    <value>Account created successfully. Please check your email and enter the OTP code to activate your account.</value>
+  </data>
+  <data name="auth.email_verified" xml:space="preserve">
+    <value>Account activated successfully. You can now sign in and use the system.</value>
+  </data>
+  <data name="auth.email_verification_code_sent" xml:space="preserve">
+    <value>A new activation code has been sent to your email. Please check your inbox and enter the OTP code.</value>
+  </data>
   <data name="auth.password_reset_code_sent" xml:space="preserve">
     <value>If the email exists, a password reset code has been sent.</value>
   </data>

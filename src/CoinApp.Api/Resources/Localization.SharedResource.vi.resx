@@ -33,6 +33,15 @@
   <data name="common.success" xml:space="preserve">
     <value>Thành công.</value>
   </data>
+  <data name="auth.registered" xml:space="preserve">
+    <value>Tạo tài khoản thành công. Vui lòng kiểm tra email và nhập mã OTP để kích hoạt tài khoản.</value>
+  </data>
+  <data name="auth.email_verified" xml:space="preserve">
+    <value>Kích hoạt tài khoản thành công. Bạn có thể đăng nhập và sử dụng hệ thống.</value>
+  </data>
+  <data name="auth.email_verification_code_sent" xml:space="preserve">
+    <value>Mã kích hoạt mới đã được gửi tới email của bạn. Vui lòng kiểm tra hộp thư và nhập mã OTP.</value>
+  </data>
   <data name="auth.password_reset_code_sent" xml:space="preserve">
     <value>Nếu email tồn tại, mã khôi phục mật khẩu sẽ được gửi cho bạn.</value>
   </data>
